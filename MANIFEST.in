@@ -1,0 +1,2 @@
+include versioneer.py
+include fastjmd95/_version.py
