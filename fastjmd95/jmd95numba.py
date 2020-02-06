@@ -5,11 +5,7 @@
 import sys
 import numpy as np
 
-from numba import guvectorize, vectorize, float64, float32
-
-__doc__ = """
-Density of Sea Water using the Jackett and McDougall 1995 (JAOT 12) polynomial
-"""
+from numba import vectorize, float64, float32
 
 # coefficients nonlinear equation of state in pressure coordinates for
 # 1. density of fresh water at p = 0
@@ -73,7 +69,10 @@ eosJMDCKP = np.array(
 )
 
 
-@vectorize([float64(float64, float64, float64)], nopython=True)
+@vectorize(
+    [float64(float64, float64, float64), float32(float32, float32, float32)],
+    nopython=True,
+)
 def _bulkmodjmd95(s, t, p):
     """ Compute bulk modulus
     """
@@ -114,7 +113,7 @@ def _bulkmodjmd95(s, t, p):
     return bulkmod
 
 
-@vectorize([float64(float64, float64)], nopython=True)
+@vectorize([float64(float64, float64), float32(float32, float32)], nopython=True)
 def _rho_s(s, t):
 
     t2 = t * t
@@ -148,36 +147,42 @@ def _rho_s(s, t):
     return rho_s
 
 
-# @vectorize(["UniTuple(float64, 2)(float64, float64, float64)"], nopython=True)
-# @guvectorize('void(float64[:],float64[:],float64[:],float64[:],float64[:])',
-#             '(n),(n),(n)->(n),(n)', nopython=True)
-@vectorize([float64(float64, float64, float64)], nopython=True)
+@vectorize(
+    [float64(float64, float64, float64), float32(float32, float32, float32)],
+    nopython=True,
+)
 def rho(s, t, p):
     """
-    Computes in-situ density of sea water
-    Density of Sea Water using Jackett and McDougall 1995 (JAOT 12)
-    polynomial (modified UNESCO polynomial).
+    Computes in-situ density of sea water using Jackett and McDougall 1995
+    polynomial [1]_.
+
     Parameters
     ----------
     s : array_like
-        salinity [psu (PSS-78)]
-    theta : array_like
+        practical salinity [psu (PSS-78)]
+    t : array_like
         potential temperature [degree C (IPTS-68)];
         same shape as s
     p : array_like
         pressure [dbar]; broadcastable to shape of s
+
     Returns
     -------
     dens : array
         density [kg/m^3]
+
     Example
     -------
-    >>> densjmd95(35.5, 3., 3000.)
+    >>> rho(35.5, 3., 3000.)
     1041.83267
+
     Notes
     -----
-    AUTHOR:  Martin Losch 2002-08-09  (mlosch@mit.edu)
-    Jackett and McDougall, 1995, JAOT 12(4), pp. 381-388
+    Adopted from `MITgcm python utils <https://github.com/MITgcm/MITgcm/blob/master/utils/python/MITgcmutils/MITgcmutils/jmd95.py>`_.
+
+    .. [1] Jackett, D.R. and T.J. Mcdougall, 1995: Minimal Adjustment of
+    Hydrographic Profiles to Achieve Static Stability. J. Atmos. Oceanic
+    Technol., 12, 381–389, https://doi.org/10.1175/1520-0426(1995)012<0381:MAOHPT>2.0.CO;2
     """
 
     # convert pressure to bar
@@ -194,9 +199,44 @@ def rho(s, t, p):
     return rho
 
 
-@vectorize([float64(float64, float64, float64)], nopython=True)
+@vectorize(
+    [float64(float64, float64, float64), float32(float32, float32, float32)],
+    nopython=True,
+)
 def drhodt(s, t, p):
+    """
+    Computes partial derivative of density with respect to potential temperature
+    using Jackett and McDougall 1995 polynomial [1]_.
 
+    Parameters
+    ----------
+    s : array_like
+        practical salinity [psu (PSS-78)]
+    t : array_like
+        potential temperature [degree C (IPTS-68)];
+        same shape as s
+    p : array_like
+        pressure [dbar]; broadcastable to shape of s
+
+    Returns
+    -------
+    drhods : array
+        partial derivative of density with respect to potential temperature
+        [kg/m^3/deg C]
+
+    Example
+    -------
+    >>> drhodt(35.5, 3., 3000.)
+    -0.17244
+
+    Notes
+    -----
+    Adopted from `MITgcm python utils <https://github.com/MITgcm/MITgcm/blob/master/utils/python/MITgcmutils/MITgcmutils/jmd95.py>`_.
+
+    .. [1] Jackett, D.R. and T.J. Mcdougall, 1995: Minimal Adjustment of
+    Hydrographic Profiles to Achieve Static Stability. J. Atmos. Oceanic
+    Technol., 12, 381–389, https://doi.org/10.1175/1520-0426(1995)012<0381:MAOHPT>2.0.CO;2
+    """
     p = 0.1 * p
     p2 = p * p
     t2 = t * t
@@ -241,8 +281,44 @@ def drhodt(s, t, p):
     # return rho, DRHODT
 
 
-@vectorize([float64(float64, float64, float64)], nopython=True)
+@vectorize(
+    [float64(float64, float64, float64), float32(float32, float32, float32)],
+    nopython=True,
+)
 def drhods(s, t, p):
+    """
+    Computes partial derivative of density with respect to practical salinity
+    using Jackett and McDougall 1995 polynomial [1]_.
+
+    Parameters
+    ----------
+    s : array_like
+        practical salinity [psu (PSS-78)]
+    theta : array_like
+        potential temperature [degree C (IPTS-68)];
+        same shape as s
+    p : array_like
+        pressure [dbar]; broadcastable to shape of s
+
+    Returns
+    -------
+    drhods : array
+        partial derivative of density with respect to practical salinity
+        [kg/m^3/psu]
+
+    Example
+    -------
+    >>> drhods(35.5, 3., 3000.)
+    0.77481
+
+    Notes
+    -----
+    Adopted from `MITgcm python utils <https://github.com/MITgcm/MITgcm/blob/master/utils/python/MITgcmutils/MITgcmutils/jmd95.py>`_.
+
+    .. [1] Jackett, D.R. and T.J. Mcdougall, 1995: Minimal Adjustment of
+    Hydrographic Profiles to Achieve Static Stability. J. Atmos. Oceanic
+    Technol., 12, 381–389, https://doi.org/10.1175/1520-0426(1995)012<0381:MAOHPT>2.0.CO;2
+    """
 
     p = 0.1 * p
     p2 = p * p
