@@ -8,6 +8,8 @@ This package provides a Numba_ implementation the JMD95 equation of state.
 Usage
 -----
 
+fastjmd95 provides three ufuncs:
+
 .. code-block:: python
 
    >>> from fastjmd95 import rho, drhods, drhodt
@@ -17,6 +19,8 @@ Usage
    -0.17244
    >>> drhods(35.5, 3., 3000.)
    0.77481
+
+Actual documentation coming soon.
 
 .. _Pangeo: http://pangeo-data.github.io
 .. _Numba: http://numba.pydata.org/
