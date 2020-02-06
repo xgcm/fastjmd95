@@ -1,0 +1,3 @@
+numba
+pytest
+pytest-cov
