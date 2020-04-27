@@ -54,30 +54,14 @@ def distributed_client():
 all_clients = ['no_client', 'threaded_client', 'processes_client', 'distributed_client']
 # https://stackoverflow.com/questions/45225950/passing-yield-fixtures-as-test-parameters-with-a-temp-directory
 @pytest.mark.parametrize('client', all_clients)
-def test_rho(request, client, s_t_p):
+@pytest.mark.parametrize('function,expected',
+                         (rho, rho_expected),
+                         (drhodt, drhodt_expected),
+                         (drhods, drhods_expected))
+def test_functions(request, client, s_t_p, function, expected):
     s, t, p = s_t_p
     if client != 'no_client':
         s, t, p = _chunk(s, t, p)
     client = request.getfixturevalue(client)
-    rho_actual = rho(s, t, p)
-    np.testing.assert_allclose(rho_actual, rho_expected)
-
-
-@pytest.mark.parametrize('client', all_clients)
-def test_drhodt(request, client, s_t_p):
-    s, t, p = s_t_p
-    if client != 'no_client':
-        s, t, p = _chunk(s, t, p)
-    client = request.getfixturevalue(client)
-    drhodt_actual = drhodt(s, t, p)
-    np.testing.assert_allclose(drhodt_actual, drhodt_expected, rtol=1e-2)
-
-
-@pytest.mark.parametrize('client', all_clients)
-def test_drhods(request, client, s_t_p):
-    s, t, p = s_t_p
-    if client != 'no_client':
-        s, t, p = _chunk(s, t, p)
-    client = request.getfixturevalue(client)
-    drhods_actual = drhods(s, t, p)
-    np.testing.assert_allclose(drhods_actual, drhods_expected, rtol=1e-2)
+    actual = functio(s, t, p)
+    np.testing.assert_allclose(actual, expected, rol=1e-2)
