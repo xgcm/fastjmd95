@@ -20,7 +20,6 @@ def _chunk(*args):
     return [dask.array.from_array(a, chunks=(5,)) for a in args]
 
 
-@pytest.fixture
 def threaded_client():
     with dask.config.set(scheduler='threads'):
         print("yeild from threaded_client")
@@ -28,7 +27,6 @@ def threaded_client():
     print("back to threaded_client")
 
 
-@pytest.fixture
 def processes_client():
     with dask.config.set(scheduler='processes'):
         print("yeild from processes_client")
@@ -36,7 +34,6 @@ def processes_client():
     print("back to processes_client")
 
 
-@pytest.fixture(scope='module')
 def distributed_client():
     from dask.distributed import Client, LocalCluster
     cluster = LocalCluster(n_workers=2)
@@ -51,12 +48,25 @@ def distributed_client():
     print('Shut down cluster')
 
 
-all_clients = [None, threaded_client, processes_client, distributed_client]
+@pytest.fixture(scope="function",
+                params=[None, "threaded", "processes", "distributed"])
+    def client(request):
+        if request.param is None:
+            yield
+        elif request.param == "threaded"
+            with threaded_client():
+                yield
+        elif request.param == "processes"
+            with processes_client():
+                yield
+        elif request.param == "distributed"
+            with distributed_client():
+                yield
 
+#all_clients = [None, threaded_client, processes_client, distributed_client]
 #@pytest.mark.parametrize('client', all_clients)
-def test_rho(distributed_client, s_t_p):
+def test_rho(client, s_t_p):
     s, t, p = s_t_p
-    client = distributed_client
     if client:
         print(client)
         s, t, p = _chunk(s, t, p)
