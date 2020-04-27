@@ -5,6 +5,8 @@ import pytest
 from fastjmd95 import rho, drhodt, drhods
 from .reference_values import rho_expected, drhodt_expected, drhods_expected
 
+import dask
+import dask.array
 
 @pytest.fixture
 def s_t_p():
@@ -14,9 +16,51 @@ def s_t_p():
     p, t, s = np.array(list(product(p0, t0, s0))).transpose()
     return s, t, p
 
+def _chunk(*args):
+    return [dask.array.from_array(a, chunks=(5,)) for a in args]
 
-def test_rho(s_t_p):
+
+@pytest.fixture
+def threaded_client():
+    with dask.config.set(scheduler='threads'):
+        print("yeild from threaded_client")
+        yield
+    print("back to threaded_client")
+
+
+@pytest.fixture
+def processes_client():
+    with dask.config.set(scheduler='processes'):
+        print("yeild from processes_client")
+        yield
+    print("back to processes_client")
+
+
+@pytest.fixture(scope='module')
+def distributed_client():
+    from dask.distributed import Client, LocalCluster
+    cluster = LocalCluster(n_workers=2)
+    client = Client(cluster)
+    print('yielding from distributed_client')
+    yield
+    print('back to distributed_client')
+    client.close()
+    del client
+    cluster.close()
+    del cluster
+    print('Shut down cluster')
+
+
+all_clients = [None, threaded_client, processes_client, distributed_client]
+
+#@pytest.mark.parametrize('client', all_clients)
+def test_rho(distributed_client, s_t_p):
     s, t, p = s_t_p
+    client = distributed_client
+    if client:
+        print(client)
+        s, t, p = _chunk(s, t, p)
+        print("chunking")
     rho_actual = rho(s, t, p)
     np.testing.assert_allclose(rho_actual, rho_expected)
 
