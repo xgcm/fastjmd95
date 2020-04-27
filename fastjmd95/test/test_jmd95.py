@@ -17,71 +17,67 @@ def s_t_p():
     return s, t, p
 
 def _chunk(*args):
-    return [dask.array.from_array(a, chunks=(5,)) for a in args]
+    return [dask.array.from_array(a, chunks=(100,)) for a in args]
 
 
+@pytest.fixture
+def no_client():
+    return None
+
+
+@pytest.fixture
 def threaded_client():
     with dask.config.set(scheduler='threads'):
-        print("yeild from threaded_client")
         yield
-    print("back to threaded_client")
 
 
+@pytest.fixture
 def processes_client():
     with dask.config.set(scheduler='processes'):
-        print("yeild from processes_client")
         yield
-    print("back to processes_client")
 
 
+@pytest.fixture(scope='module')
 def distributed_client():
     from dask.distributed import Client, LocalCluster
-    cluster = LocalCluster(n_workers=2)
+    cluster = LocalCluster(threads_per_worker=1,
+                           n_workers=2,
+                           processes=True)
     client = Client(cluster)
-    print('yielding from distributed_client')
     yield
-    print('back to distributed_client')
     client.close()
     del client
     cluster.close()
     del cluster
-    print('Shut down cluster')
 
 
-@pytest.fixture(scope="function",
-                params=[None, "threaded", "processes", "distributed"])
-    def client(request):
-        if request.param is None:
-            yield
-        elif request.param == "threaded"
-            with threaded_client():
-                yield
-        elif request.param == "processes"
-            with processes_client():
-                yield
-        elif request.param == "distributed"
-            with distributed_client():
-                yield
-
-#all_clients = [None, threaded_client, processes_client, distributed_client]
-#@pytest.mark.parametrize('client', all_clients)
-def test_rho(client, s_t_p):
+all_clients = ['no_client', 'threaded_client', 'processes_client', 'distributed_client']
+# https://stackoverflow.com/questions/45225950/passing-yield-fixtures-as-test-parameters-with-a-temp-directory
+@pytest.mark.parametrize('client', all_clients)
+def test_rho(request, client, s_t_p):
     s, t, p = s_t_p
-    if client:
-        print(client)
+    if client != 'no_client':
         s, t, p = _chunk(s, t, p)
-        print("chunking")
+    client = request.getfixturevalue(client)
     rho_actual = rho(s, t, p)
     np.testing.assert_allclose(rho_actual, rho_expected)
 
 
-def test_drhot(s_t_p):
+@pytest.mark.parametrize('client', all_clients)
+def test_drhodt(request, client, s_t_p):
     s, t, p = s_t_p
+    if client != 'no_client':
+        s, t, p = _chunk(s, t, p)
+    client = request.getfixturevalue(client)
     drhodt_actual = drhodt(s, t, p)
     np.testing.assert_allclose(drhodt_actual, drhodt_expected, rtol=1e-2)
 
 
-def test_drhos(s_t_p):
+@pytest.mark.parametrize('client', all_clients)
+def test_drhods(request, client, s_t_p):
     s, t, p = s_t_p
+    if client != 'no_client':
+        s, t, p = _chunk(s, t, p)
+    client = request.getfixturevalue(client)
     drhods_actual = drhods(s, t, p)
     np.testing.assert_allclose(drhods_actual, drhods_expected, rtol=1e-2)
