@@ -1,7 +1,7 @@
 fastjmd95: Numba implementation of Jackett & McDougall (1995) ocean equation of state
 =====================================================================================
 
-|pypi| |conda forge| |Build Status| |codecov| |license|
+|Build Status| |license|
 
 This package provides a Numba_ implementation the JMD95 equation of state.
 
@@ -20,7 +20,10 @@ fastjmd95 provides three ufuncs:
    >>> drhods(35.5, 3., 3000.)
    0.77481
 
-Actual documentation coming soon.
+Tutorial
+--------
+
+Tutorial notebook located at `doc/fastjmd95_tutorial.ipynb <https://nbviewer.jupyter.org/github/xgcm/fastjmd95/blob/master/doc/fastjmd95_tutorial.ipynb>`_.
 
 .. _Pangeo: http://pangeo-data.github.io
 .. _Numba: http://numba.pydata.org/
