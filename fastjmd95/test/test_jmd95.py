@@ -2,7 +2,7 @@ import numpy as np
 from itertools import product
 import pytest
 
-from fastjmd95 import rho, drhodt, drhods
+from fastjmd95 import rho_x, drhodt_x, drhods_x
 from .reference_values import rho_expected, drhodt_expected, drhods_expected
 
 import dask
@@ -55,9 +55,9 @@ all_clients = ['no_client', 'threaded_client', 'processes_client', 'distributed_
 # https://stackoverflow.com/questions/45225950/passing-yield-fixtures-as-test-parameters-with-a-temp-directory
 @pytest.mark.parametrize('client', all_clients)
 @pytest.mark.parametrize('function,expected',
-                         [(rho, rho_expected),
-                         (drhodt, drhodt_expected),
-                         (drhods, drhods_expected)])
+                         [(rho_x, rho_expected),
+                         (drhodt_x, drhodt_expected),
+                         (drhods_x, drhods_expected)])
 def test_functions(request, client, s_t_p, function, expected):
     s, t, p = s_t_p
     if client != 'no_client':
