@@ -2,4 +2,4 @@ numba
 pytest
 pytest-cov
 xarray
-dask
+dask[array]
