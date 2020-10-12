@@ -1,5 +1,0 @@
-numba
-pytest
-pytest-cov
-xarray
-dask[array]
