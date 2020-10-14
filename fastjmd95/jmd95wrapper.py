@@ -6,19 +6,13 @@ import xarray as xr
 
 import fastjmd95.jmd95numba as jmd95numba
 
-def _any_dask_array(a,b,c):
-    any_dask = any([isinstance(a,dask.array.core.Array),
-           isinstance(b,dask.array.core.Array),
-           isinstance(c,dask.array.core.Array)])
-    return any_dask
+def _any_dask_array(*args):
+    return any([isinstance(a, dask.array.core.Array) for a in args])
 
-def _any_xarray(a,b,c):
-    any_xarray = any([[isinstance(a,xr.DataArray),
-           isinstance(b,xr.DataArray),
-           isinstance(c,xr.DataArray)]])
-    return any_xarray
+def _any_xarray(*args):
+    return any([isinstance(a, xr.DataArray) for a in args])
 
-def my_decorator(func):
+def maybe_wrap_arrays(func):
     def wrapper(*args):
         if _any_dask_array(*args):
             rho = dsa.map_blocks(func,*args)
@@ -29,14 +23,14 @@ def my_decorator(func):
         return rho
     return wrapper
 
-@my_decorator
+@maybe_wrap_arrays
 def rho(s,t,p):
     return jmd95numba.rho(s,t,p)
     
-@my_decorator
+@maybe_wrap_arrays
 def drhodt(s,t,p):
     return jmd95numba.drhodt(s,t,p)
 
-@my_decorator
+@maybe_wrap_arrays
 def drhods(s,t,p):
     return jmd95numba.drhods(s,t,p)
