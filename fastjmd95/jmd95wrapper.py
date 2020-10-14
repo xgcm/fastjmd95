@@ -17,7 +17,7 @@ def maybe_wrap_arrays(func):
         if _any_dask_array(*args):
             rho = dsa.map_blocks(func,*args)
         elif _any_xarray(*args):
-            rho = xr.apply_ufunc(func,*args,dask='allowed')
+            rho = xr.apply_ufunc(func,*args,output_dtypes=[float],dask='parallelized')
         else:
             rho = func(*args)
         return rho
