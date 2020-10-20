@@ -7,6 +7,7 @@ from .reference_values import rho_expected, drhodt_expected, drhods_expected
 
 import dask
 import dask.array
+import xarray as xr
 
 @pytest.fixture
 def s_t_p():
@@ -19,6 +20,10 @@ def s_t_p():
 def _chunk(*args):
     return [dask.array.from_array(a, chunks=(100,)) for a in args]
 
+def _make_xarray(*args,withdask=False):
+    if withdask==True:
+        args = _chunk(*args)
+    return [xr.DataArray(a, coords=[np.arange(0,len(a))], dims=["i"]) for a in args]
 
 @pytest.fixture
 def no_client():
@@ -52,16 +57,24 @@ def distributed_client():
 
 
 all_clients = ['no_client', 'threaded_client', 'processes_client', 'distributed_client']
+all_arrays = ['dask_arrays', 'xarrays']
 # https://stackoverflow.com/questions/45225950/passing-yield-fixtures-as-test-parameters-with-a-temp-directory
 @pytest.mark.parametrize('client', all_clients)
+@pytest.mark.parametrize('array_type', all_arrays)
 @pytest.mark.parametrize('function,expected',
                          [(rho, rho_expected),
                          (drhodt, drhodt_expected),
                          (drhods, drhods_expected)])
-def test_functions(request, client, s_t_p, function, expected):
+def test_functions(request, client, array_type, s_t_p, function, expected):
     s, t, p = s_t_p
-    if client != 'no_client':
-        s, t, p = _chunk(s, t, p)
+    if array_type == 'dask_arrays':
+        if client != 'no_client':
+            s, t, p = _chunk(s, t, p)
+    elif array_type == 'xarrays':
+        if client != 'no_client':
+            s, t, p = _make_xarray(s, t, p, withdask=True)
+        else:
+            s, t, p = _make_xarray(s, t, p, withdask=False)
     client = request.getfixturevalue(client)
     actual = function(s, t, p)
     np.testing.assert_allclose(actual, expected, rtol=1e-2)

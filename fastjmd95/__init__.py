@@ -1,1 +1,1 @@
-from .jmd95numba import rho, drhodt, drhods
+from .jmd95wrapper import rho, drhodt, drhods
