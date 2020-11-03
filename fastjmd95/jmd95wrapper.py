@@ -1,22 +1,29 @@
 
-import numpy as np
-import dask.array as dsa
-import dask
-import xarray as xr
-
 import fastjmd95.jmd95numba as jmd95numba
 
 def _any_dask_array(*args):
-    return any([isinstance(a, dask.array.core.Array) for a in args])
+    try:
+        import dask.array as dsa
+        return any([isinstance(a, dsa.core.Array) for a in args])
+    except ImportError:
+        print("Can't parse dask arrays if dask isn't installed")
+        return False
 
 def _any_xarray(*args):
-    return any([isinstance(a, xr.DataArray) for a in args])
+    try:
+        import xarray as xr
+        return any([isinstance(a, xr.DataArray) for a in args])
+    except ImportError:
+        print("Can't parse xarrays if xarray isn't installed")
+        return False
 
 def maybe_wrap_arrays(func):
     def wrapper(*args):
         if _any_dask_array(*args):
+            import dask.array as dsa
             rho = dsa.map_blocks(func,*args)
         elif _any_xarray(*args):
+            import xarray as xr
             rho = xr.apply_ufunc(func,*args,output_dtypes=[float],dask='parallelized')
         else:
             rho = func(*args)

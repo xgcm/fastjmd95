@@ -23,6 +23,7 @@ CLASSIFIERS = [
 ]
 
 INSTALL_REQUIRES = ["numba"]
+EXTRAS_REQUIRE = ["dask","xarray"]
 PYTHON_REQUIRES = ">=3.6"
 
 DESCRIPTION = "Numba version of Jackett & McDougall (1995) ocean equation of state."
@@ -45,6 +46,7 @@ setup(
     long_description=readme(),
     install_requires=INSTALL_REQUIRES,
     python_requires=PYTHON_REQUIRES,
+    extras_require=EXTRAS_REQUIRE,
     url=URL,
     packages=find_packages(),
 )
