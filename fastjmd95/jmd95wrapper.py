@@ -1,16 +1,27 @@
 
-import numpy as np
-import dask.array as dsa
-import dask
-import xarray as xr
-
 import fastjmd95.jmd95numba as jmd95numba
 
+try:
+    import dask.array as dsa
+except ImportError:
+    dsa = None
+
+try:
+    import xarray as xr
+except ImportError:
+    xr = None
+
 def _any_dask_array(*args):
-    return any([isinstance(a, dask.array.core.Array) for a in args])
+    if dsa:
+        return any([isinstance(a, dsa.core.Array) for a in args])
+    else:
+        return False
 
 def _any_xarray(*args):
-    return any([isinstance(a, xr.DataArray) for a in args])
+    if xr:
+        return any([isinstance(a, xr.DataArray) for a in args])
+    else:
+        return False
 
 def maybe_wrap_arrays(func):
     def wrapper(*args):
