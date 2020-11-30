@@ -23,7 +23,7 @@ CLASSIFIERS = [
 ]
 
 INSTALL_REQUIRES = ["numba"]
-EXTRAS_REQUIRE = ["dask","xarray"]
+EXTRAS_REQUIRE = {"dask": ["dask"], "xarray": ["xarray"]}
 PYTHON_REQUIRES = ">=3.6"
 
 DESCRIPTION = "Numba version of Jackett & McDougall (1995) ocean equation of state."
